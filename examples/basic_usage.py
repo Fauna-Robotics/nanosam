@@ -13,49 +13,63 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import PIL.Image
-import argparse
+
 from nanosam.utils.predictor import Predictor
 
-
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser()
-    parser.add_argument("--image_encoder", type=str, default="data/resnet18_image_encoder.engine")
-    parser.add_argument("--mask_decoder", type=str, default="data/mobile_sam_mask_decoder.engine")
-    args = parser.parse_args()
-        
-    # Instantiate TensorRT predictor
-    predictor = Predictor(
-        args.image_encoder,
-        args.mask_decoder
+    parser.add_argument(
+        "--image_encoder", type=str, default="data/resnet18_image_encoder.engine"
     )
+    parser.add_argument(
+        "--mask_decoder", type=str, default="data/mobile_sam_mask_decoder.engine"
+    )
+    args = parser.parse_args()
+
+    # Instantiate TensorRT predictor
+    predictor = Predictor(args.image_encoder, args.mask_decoder)
 
     # Read image and run image encoder
-    image = PIL.Image.open("assets/dogs.jpg")
-    predictor.set_image(image)
+    image_brambling = PIL.Image.open("assets/brambling.jpeg")
+    image_dogs = PIL.Image.open("assets/dogs.jpg")
 
     # Segment using bounding box
-    bbox = [100, 100, 850, 759]  # x0, y0, x1, y1
+    bbox_dogs = [[134, 112, 850, 759], [671, 173, 1177, 759]]
+    bbox_brambling = [[239, 144, 277, 200]]
 
-    points = np.array([
-        [bbox[0], bbox[1]],
-        [bbox[2], bbox[3]]
-    ])
-
-    point_labels = np.array([2, 3])
-
-    mask, _, _ = predictor.predict(points, point_labels)
-
+    # Run inference on an example
+    predictor.set_image(image_brambling)
+    mask, _, _ = predictor.predict(bboxes=bbox_brambling)
     mask = (mask[0, 0] > 0).detach().cpu().numpy()
 
-    # Draw resykts
-    plt.imshow(image)
+    # Draw
+    plt.imshow(image_brambling)
     plt.imshow(mask, alpha=0.5)
-    x = [bbox[0], bbox[2], bbox[2], bbox[0], bbox[0]]
-    y = [bbox[1], bbox[1], bbox[3], bbox[3], bbox[1]]
-    plt.plot(x, y, 'g-')
-    plt.savefig("data/basic_usage_out.jpg")
+    x = [bbox_brambling[0][0], bbox_brambling[0][2], bbox_brambling[0][2], bbox_brambling[0][0], bbox_brambling[0][0]]
+    y = [bbox_brambling[0][1], bbox_brambling[0][1], bbox_brambling[0][3], bbox_brambling[0][3], bbox_brambling[0][1]]
+    plt.plot(x, y, "g-")
+    plt.savefig("data/brambling_out.jpg")
 
+    # Run inference on an example
+    predictor.set_image(image_brambling)
+    predictor.set_image(image_dogs)
+    mask, _, _ = predictor.predict(bboxes=bbox_dogs)
+    mask = mask.detach().cpu().numpy()
+    mask = (mask[0, 0] > 0) | (mask[1, 0] > 0)
+
+    # Draw
+    plt.imshow(image_dogs)
+    plt.imshow(mask, alpha=0.5)
+    x = [bbox_dogs[1][0], bbox_dogs[1][2], bbox_dogs[1][2], bbox_dogs[1][0], bbox_dogs[1][0]]
+    y = [bbox_dogs[1][1], bbox_dogs[1][1], bbox_dogs[1][3], bbox_dogs[1][3], bbox_dogs[1][1]]
+    plt.plot(x, y, "g-")
+    x = [bbox_dogs[0][0], bbox_dogs[0][2], bbox_dogs[0][2], bbox_dogs[0][0], bbox_dogs[0][0]]
+    y = [bbox_dogs[0][1], bbox_dogs[0][1], bbox_dogs[0][3], bbox_dogs[0][3], bbox_dogs[0][1]]
+    plt.plot(x, y, "g-")
+    plt.savefig("data/dogs_out.jpg")
+
+    print("DONE")
