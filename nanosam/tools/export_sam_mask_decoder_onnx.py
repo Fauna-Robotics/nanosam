@@ -127,16 +127,17 @@ def run_export(
         "point_coords": {1: "num_points"},
         "point_labels": {1: "num_points"},
     }
-
+    dynamic_axes = {"bbox": {0: "batch_size", 1: "num_boxes"}}
     embed_dim = sam.prompt_encoder.embed_dim
     embed_size = sam.prompt_encoder.image_embedding_size
     mask_input_size = [4 * x for x in embed_size]
     dummy_inputs = {
         "image_embeddings": torch.randn(1, embed_dim, *embed_size, dtype=torch.float),
-        "point_coords": torch.randint(low=0, high=1024, size=(1, 5, 2), dtype=torch.float),
-        "point_labels": torch.randint(low=0, high=4, size=(1, 5), dtype=torch.float),
-        "mask_input": torch.randn(1, 1, *mask_input_size, dtype=torch.float),
-        "has_mask_input": torch.tensor([1], dtype=torch.float)
+        #"point_coords": torch.randint(low=0, high=1024, size=(1, 5, 2), dtype=torch.float),
+        #"point_labels": torch.randint(low=0, high=4, size=(1, 5), dtype=torch.float),
+        #"mask_input": torch.randn(1, 1, *mask_input_size, dtype=torch.float),
+        #"has_mask_input": torch.tensor([1], dtype=torch.float),
+        "bbox": torch.tensor([[[0, 0, 100, 100]]], dtype=torch.float),
         # "orig_im_size": torch.tensor([1500, 2250], dtype=torch.int32),
     }
 
