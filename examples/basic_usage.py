@@ -56,17 +56,16 @@ def boxes_to_tensor(bboxes):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--image_encoder", type=str, default="data/resnet18_image_encoder.engine"
+        "--image_encoder", type=str, default="/opt/fauna/cache/online_mapping/resnet18_image_encoder.engine"
     )
     parser.add_argument(
-        "--mask_decoder", type=str, default="data/mobile_sam_mask_decoder.engine"
+        "--mask_decoder", type=str, default="/opt/fauna/cache/online_mapping/mobile_sam_mask_decoder.engine"
     )
     args = parser.parse_args()
 
     # Instantiate TensorRT predictor
     predictor = Predictor(args.image_encoder, args.mask_decoder)
 
-    # Read image and run image encoder
     image_brambling = PIL.Image.open("assets/brambling.jpeg")
     image_dogs = PIL.Image.open("assets/dogs.jpg")
 
@@ -74,6 +73,7 @@ if __name__ == "__main__":
     bbox_dogs = [[134, 112, 850, 759], [671, 173, 1177, 759]]
     bbox_brambling = [[239, 144, 277, 200]]
 
+    # Run inference on an example
     start_time = time.time()
     predictor.set_image(pil_to_tensor(image_brambling).permute(2, 0, 1))
     print(f"Time taken by encoder is {time.time() - start_time}")

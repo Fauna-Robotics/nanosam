@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import time
 from torch2trt import TRTModule
 from typing import Tuple
 import tensorrt as trt
@@ -201,12 +200,12 @@ class Predictor(object):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
     def set_image(self, image: torch.Tensor):
-        self.image = image
+        self.image = image.to(self.device)
         self.img_height, self.img_width = self.image.shape[1], self.image.shape[2]
         self.image_tensor = preprocess_image_tensor(self.image, self.image_encoder_size)
         self.features = self.image_encoder_engine(self.image_tensor)
 
-    def predict(self, points=None, point_labels=None, mask_input=None, bboxes=None):
+    def predict(self, bboxes=None):
         bboxes = bboxes.to(self.device)
         bboxes = preprocess_points(bboxes, (self.img_height, self.img_width), self.orig_image_encoder_size)
         mask_iou, low_res_mask = run_mask_decoder(
